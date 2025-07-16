@@ -147,7 +147,7 @@ def seleccionar_producto(driver, nombre=None, producto_id=None):
         test_results.append(f"❌ Falló la selección de producto: {e}")
         raise
 
-def calificar_producto(driver, estrellas=5, comentario="prueba de comentario"):
+def calificar_producto(driver, estrellas=5, comentario="Prueba de comentario"):
     try:
         estrellas_elements = driver.find_elements(By.CSS_SELECTOR, 'span[class*="css-w8gd7d"]')
         for i in range(estrellas):
@@ -163,10 +163,11 @@ def calificar_producto(driver, estrellas=5, comentario="prueba de comentario"):
         test_results.append(f"❌ Falló la calificación de producto: {e}")
         raise
 
-def actualizar_calificacion(driver):
+def actualizar_calificacion(driver, comentario=" actualizado"):
     try:
         textarea = driver.find_element(By.CSS_SELECTOR, 'textarea[placeholder*="Comparte tu experiencia"]')
         textarea.clear()
+        textarea.send_keys(comentario)
         driver.find_element(By.XPATH, '//button[contains(text(),"Actualizar Calificación")]').click()
         time.sleep(2)
         test_results.append("✅ Calificación actualizada correctamente.")
@@ -224,15 +225,85 @@ def editar_producto(driver, producto_id):
         test_results.append(f"❌ Falló la navegación a editar producto: {e}")
         raise
 
-def actualizar_descripcion_producto(driver):
+def actualizar_descripcion_producto(driver, descripcion=" actualizado"):
     try:
         textarea = driver.find_element(By.NAME, "description")
         textarea.clear()
+        textarea.send_keys(descripcion)
         driver.find_element(By.XPATH, '//button[contains(text(),"Guardar Cambios")]').click()
-        time.sleep(2)
+        time.sleep(1)
+        driver.switch_to.alert.accept()  # Aceptar alerta
         test_results.append("✅ Descripción de producto actualizada correctamente.")
     except Exception as e:
         test_results.append(f"❌ Falló la actualización de descripción: {e}")
+        raise
+
+def agregar_carrito_catalogo(driver):
+    try:
+        # Busca el primer botón "Agregar" en la tarjeta del catálogo por clase y texto
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Agregar")]'))
+        )
+        driver.find_element(By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Agregar")]').click()
+        time.sleep(2)
+        test_results.append("✅ Producto agregado al carrito desde catálogo correctamente.")
+    except Exception as e:
+        test_results.append(f"❌ Falló la adición al carrito desde catálogo: {e}")
+        raise
+
+def agregar_carrito_detalle(driver):
+    try:
+        # Busca el botón "Agregar al Carrito" en la página de detalle
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Agregar al Carrito")]'))
+        )
+        driver.find_element(By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Agregar al Carrito")]').click()
+        time.sleep(2)
+        test_results.append("✅ Producto agregado al carrito desde detalle correctamente.")
+    except Exception as e:
+        test_results.append(f"❌ Falló la adición al carrito desde detalle: {e}")
+        raise
+
+def cargar_carrito(driver):
+    try:
+        # Espera el botón del carrito en la navbar
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.navbar-button.cart-icon-button'))
+        )
+        driver.find_element(By.CSS_SELECTOR, 'a.navbar-button.cart-icon-button').click()
+        time.sleep(2)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "cart-content"))
+        )
+        test_results.append("✅ Carrito cargado correctamente.")
+    except Exception as e:
+        test_results.append(f"❌ Falló la carga del carrito: {e}")
+        raise
+
+def eliminar_carrito(driver):
+    try:
+        # Elimina el primer producto del carrito usando el botón "Eliminar"
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.remove-button'))
+        )
+        driver.find_element(By.CSS_SELECTOR, 'button.remove-button').click()
+        time.sleep(2)
+        test_results.append("✅ Producto eliminado del carrito correctamente.")
+    except Exception as e:
+        test_results.append(f"❌ Falló la eliminación del producto del carrito: {e}")
+        raise
+
+def realizar_pedido(driver):
+    try:
+        # Busca el botón "Realizar Pedido" en la página de detalle
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Realizar Pedido")]'))
+        )
+        driver.find_element(By.XPATH, '//button[contains(@class, "MuiButton-containedPrimary") and contains(., "Realizar Pedido")]').click()
+        time.sleep(10)  # Espera para simular el tiempo de procesamiento del pedido
+        test_results.append("✅ Pedido realizado correctamente.")
+    except Exception as e:
+        test_results.append(f"❌ Falló la realización del pedido: {e}")
         raise
 
 def eliminar_producto(driver):
@@ -242,6 +313,7 @@ def eliminar_producto(driver):
         )
         driver.find_element(By.XPATH, '//button[contains(text(),"Eliminar")]').click()
         time.sleep(2)
+        driver.switch_to.alert.accept()  # Aceptar alerta
         test_results.append("✅ Producto eliminado correctamente.")
     except Exception as e:
         test_results.append(f"❌ Falló la eliminación de producto: {e}")
@@ -271,20 +343,27 @@ def main():
         test_full_name = "Usuario de Prueba"
         test_produc_name = f"{generate_random_string()} Producto Test"
         abrir_frontend(driver)
-        cargar_catalogo(driver)
+        ver_productos(driver)
         ir_a_login(driver)
         crear_usuario(driver, test_full_name, test_email, test_password)
         iniciar_sesion(driver, test_email, test_password)
         cargar_catalogo(driver)
-        seleccionar_producto(driver, nombre="Papa")  # Cambia el nombre según el producto que exista
+        seleccionar_producto(driver, nombre="Papa")  
         calificar_producto(driver, estrellas=5, comentario="prueba de comentario")
         actualizar_calificacion(driver)
+        cargar_catalogo(driver)
+        agregar_carrito_catalogo(driver) # Agregar producto al carrito desde el catálogo
+        seleccionar_producto(driver, nombre="Fresa")
+        agregar_carrito_detalle(driver)
+        cargar_carrito(driver)
+        eliminar_carrito(driver)
+        realizar_pedido(driver)
         ir_a_añadir_producto(driver)
         crear_producto(driver, test_produc_name, 1000, 10, "0123456789", "Frutas", "descripción de prueba")
         cargar_catalogo(driver)
         buscar_producto(driver, test_produc_name)
         seleccionar_producto(driver, nombre=test_produc_name)
-        editar_producto(driver, producto_id=None)  # Si tienes el _id, pásalo aquí
+        editar_producto(driver, producto_id=None) 
         actualizar_descripcion_producto(driver)
         cargar_catalogo(driver)
         buscar_producto(driver, test_produc_name)
