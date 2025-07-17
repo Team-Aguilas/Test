@@ -3,6 +3,7 @@ import os
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Image
 from datetime import datetime
 import random
 import string
@@ -169,7 +170,6 @@ def generate_pdf_report(results, filename_prefix="AgroRedDev_Backend_Test_Report
     if not os.path.exists(reports_dir):
         os.makedirs(reports_dir)
     
-    # Generar un número de reporte único basado en la fecha y un contador
     now = datetime.now()
     date_str = now.strftime('%Y%m%d')
     counter = 1
@@ -182,6 +182,13 @@ def generate_pdf_report(results, filename_prefix="AgroRedDev_Backend_Test_Report
     styles = getSampleStyleSheet()
     story = []
 
+    # Agrega el logo de la universidad (ajusta la ruta si es necesario)
+    logo_path = os.path.join(reports_dir, "unal_logo.png")
+    if os.path.exists(logo_path):
+        img = Image(logo_path, width=128, height=60)  # Ajusta tamaño si lo deseas
+        story.append(img)
+        story.append(Spacer(1, 12))
+
     story.append(Paragraph("AgroRedDev Backend Integration Test Report", styles['h1']))
     story.append(Paragraph(f"Fecha: {now.strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
     story.append(Spacer(1, 12))
@@ -189,7 +196,7 @@ def generate_pdf_report(results, filename_prefix="AgroRedDev_Backend_Test_Report
     for result in results:
         style = styles['Normal']
         if "FAILED" in result:
-            style = styles['Code'] # Usar un estilo diferente para fallos
+            style = styles['Code']
             story.append(Paragraph(f"<font color='red'>{result}</font>", style))
         elif "PASSED" in result:
             story.append(Paragraph(f"<font color='green'>{result}</font>", style))
