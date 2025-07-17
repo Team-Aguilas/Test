@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Image
 from datetime import datetime
 import random
 import string
@@ -31,6 +32,14 @@ def generate_pdf_report(results, filename_prefix="AgroRed_Frontend_Test_Report")
     doc = SimpleDocTemplate(filename, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
+    # Agrega el logo de la universidad (ajusta la ruta si es necesario)
+    logo_path = os.path.join(reports_dir, "unal_logo.png")
+    if os.path.exists(logo_path):
+        img = Image(logo_path, width=128, height=60)  # Ajusta tamaño si lo deseas
+        story.append(img)
+        story.append(Spacer(1, 12))
+
     story.append(Paragraph("AgroRed Frontend Integration Test Report", styles['h1']))
     story.append(Paragraph(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
     story.append(Spacer(1, 12))
@@ -48,7 +57,6 @@ def generate_pdf_report(results, filename_prefix="AgroRed_Frontend_Test_Report")
         print(f"📊 PDF report generated: {filename}")
     except Exception as e:
         print(f"❌ Error generating PDF report: {e}")
-
 def abrir_frontend(driver):
     try:
         driver.get("http://localhost:5173")
